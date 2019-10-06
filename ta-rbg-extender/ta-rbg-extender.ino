@@ -10,11 +10,11 @@
 // It best to run the Pro Mini on 5V and 16MHz.
 // That way, you can skip levelconverters on I2C.
 // Arduino Mini Pro uses A4 and A5 for I2C bus.
-// i2c address in this demo sketch is set to 7e
+// i2c address in this demo sketch is set to 0x60
 
 #include <Wire.h>
 
-#define I2C_MSG_IN_SIZE    2
+#define I2C_MSG_IN_SIZE    4
 #define I2C_MSG_OUT_SIZE   4
 #define I2C_ADDRESS 0x60
 
@@ -23,7 +23,7 @@
 
 #define CMD_SET_COLOR 1
 #define CMD_SET_BRIGHTNESS 2
-#define CMD_SET_RING 3
+#define CMD_ALL_OFF 3
 
 
 volatile uint8_t sendBuffer[I2C_MSG_OUT_SIZE];
@@ -31,8 +31,6 @@ volatile uint8_t sendBuffer[I2C_MSG_OUT_SIZE];
 #define LEDS_PER_RING 16
 #define NUM_LEDS 32
 CRGB leds[ NUM_LEDS ];
-
-int ring = 0;
 
 void setup()
 {
@@ -61,9 +59,8 @@ void receiveEvent(int count)
   if (count == I2C_MSG_IN_SIZE)
   {
     byte cmd = Wire.read();
-    byte val = Wire.read();
-    //int value = Wire.read();
-    //value += Wire.read()*256;
+    byte ring = Wire.read();
+    int value = Wire.read();
     switch(cmd)
       {
         case CMD_SET_COLOR:
@@ -76,8 +73,9 @@ void receiveEvent(int count)
           FastLED.setBrightness(val);
           FastLED.show();
           break;
-        case CMD_SET_RING:
-          ring = rangeCheck(val, 0, 1);
+        case CMD_ALL_OFF:
+          fill_solid( leds, NUM_LEDS, CRGB::Black);
+          FastLED.show();
           break;
      }
   }
