@@ -122,7 +122,7 @@ void loop() {
 
     case 14 : {
                 // Fire - Cooling rate, Sparking rate, speed delay
-                Fire(55,120,150);
+                Fire(55,120,150,30);
                 break;
               }
 
@@ -451,40 +451,42 @@ void theaterChaseRainbow(int SpeedDelay) {
   }
 }
 
-void Fire(int Cooling, int Sparking, int SpeedDelay) {
+void Fire(int Cooling, int Sparking, int SpeedDelay, int Iterations) {
   static byte heat[NUM_LEDS];
   int cooldown;
   
-  // Step 1.  Cool down every cell a little
-  for( int i = 0; i < NUM_LEDS; i++) {
-    cooldown = random(0, ((Cooling * 10) / NUM_LEDS) + 2);
-    
-    if(cooldown>heat[i]) {
-      heat[i]=0;
-    } else {
-      heat[i]=heat[i]-cooldown;
+  for( int p = 0; p < Iterations; p++ ) {
+    // Step 1.  Cool down every cell a little
+    for( int i = 0; i < NUM_LEDS; i++) {
+      cooldown = random(0, ((Cooling * 10) / NUM_LEDS) + 2);
+      
+      if(cooldown>heat[i]) {
+        heat[i]=0;
+      } else {
+        heat[i]=heat[i]-cooldown;
+      }
     }
-  }
-  
-  // Step 2.  Heat from each cell drifts 'up' and diffuses a little
-  for( int k= NUM_LEDS - 1; k >= 2; k--) {
-    heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2]) / 3;
-  }
     
-  // Step 3.  Randomly ignite new 'sparks' near the bottom
-  if( random(255) < Sparking ) {
-    int y = random(7);
-    heat[y] = heat[y] + random(160,255);
-    //heat[y] = random(160,255);
-  }
+    // Step 2.  Heat from each cell drifts 'up' and diffuses a little
+    for( int k= NUM_LEDS - 1; k >= 2; k--) {
+      heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2]) / 3;
+    }
+      
+    // Step 3.  Randomly ignite new 'sparks' near the bottom
+    if( random(255) < Sparking ) {
+      int y = random(7);
+      heat[y] = heat[y] + random(160,255);
+      //heat[y] = random(160,255);
+    }
 
-  // Step 4.  Convert heat to LED colors
-  for( int j = 0; j < NUM_LEDS; j++) {
-    setPixelHeatColor(j, heat[j] );
-  }
+    // Step 4.  Convert heat to LED colors
+    for( int j = 0; j < NUM_LEDS; j++) {
+      setPixelHeatColor(j, heat[j] );
+    }
 
-  showStrip();
-  delay(SpeedDelay);
+    showStrip();
+    delay(SpeedDelay);
+  }
 }
 
 void setPixelHeatColor (int Pixel, byte temperature) {
