@@ -227,17 +227,17 @@ void CenterToOutside(byte red, byte green, byte blue, int EyeSize, int SpeedDela
   for(int i =((NUM_LEDS-EyeSize)/2); i>=0; i--) {
     setAll(0,0,0);
     
-    setPixel(i, red/10, green/10, blue/10);
+    setPixelR(i, red/10, green/10, blue/10);
     for(int j = 1; j <= EyeSize; j++) {
-      setPixel(i+j, red, green, blue); 
+      setPixelR(i+j, red, green, blue); 
     }
-    setPixel(i+EyeSize+1, red/10, green/10, blue/10);
+    setPixelR(i+EyeSize+1, red/10, green/10, blue/10);
     
-    setPixel(NUM_LEDS-i, red/10, green/10, blue/10);
+    setPixelR(NUM_LEDS-i, red/10, green/10, blue/10);
     for(int j = 1; j <= EyeSize; j++) {
-      setPixel(NUM_LEDS-i-j, red, green, blue); 
+      setPixelR(NUM_LEDS-i-j, red, green, blue); 
     }
-    setPixel(NUM_LEDS-i-EyeSize-1, red/10, green/10, blue/10);
+    setPixelR(NUM_LEDS-i-EyeSize-1, red/10, green/10, blue/10);
     
     showStrip();
     delay(SpeedDelay);
@@ -250,17 +250,17 @@ void OutsideToCenter(byte red, byte green, byte blue, int EyeSize, int SpeedDela
   for(int i = 0; i<=((NUM_LEDS-EyeSize)/2); i++) {
     setAll(0,0,0);
     
-    setPixel(i, red/10, green/10, blue/10);
+    setPixelR(i, red/10, green/10, blue/10);
     for(int j = 1; j <= EyeSize; j++) {
-      setPixel(i+j, red, green, blue); 
+      setPixelR(i+j, red, green, blue); 
     }
-    setPixel(i+EyeSize+1, red/10, green/10, blue/10);
+    setPixelR(i+EyeSize+1, red/10, green/10, blue/10);
     
-    setPixel(NUM_LEDS-i, red/10, green/10, blue/10);
+    setPixelR(NUM_LEDS-i, red/10, green/10, blue/10);
     for(int j = 1; j <= EyeSize; j++) {
-      setPixel(NUM_LEDS-i-j, red, green, blue); 
+      setPixelR(NUM_LEDS-i-j, red, green, blue); 
     }
-    setPixel(NUM_LEDS-i-EyeSize-1, red/10, green/10, blue/10);
+    setPixelR(NUM_LEDS-i-EyeSize-1, red/10, green/10, blue/10);
     
     showStrip();
     delay(SpeedDelay);
@@ -272,11 +272,11 @@ void OutsideToCenter(byte red, byte green, byte blue, int EyeSize, int SpeedDela
 void LeftToRight(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay) {
   for(int i = 0; i < NUM_LEDS-EyeSize-2; i++) {
     setAll(0,0,0);
-    setPixel(i, red/10, green/10, blue/10);
+    setPixelR(i, red/10, green/10, blue/10);
     for(int j = 1; j <= EyeSize; j++) {
-      setPixel(i+j, red, green, blue); 
+      setPixelR(i+j, red, green, blue); 
     }
-    setPixel(i+EyeSize+1, red/10, green/10, blue/10);
+    setPixelR(i+EyeSize+1, red/10, green/10, blue/10);
     showStrip();
     delay(SpeedDelay);
   }
@@ -287,11 +287,11 @@ void LeftToRight(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, i
 void RightToLeft(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay) {
   for(int i = NUM_LEDS-EyeSize-2; i > 0; i--) {
     setAll(0,0,0);
-    setPixel(i, red/10, green/10, blue/10);
+    setPixelR(i, red/10, green/10, blue/10);
     for(int j = 1; j <= EyeSize; j++) {
-      setPixel(i+j, red, green, blue); 
+      setPixelR(i+j, red, green, blue); 
     }
-    setPixel(i+EyeSize+1, red/10, green/10, blue/10);
+    setPixelR(i+EyeSize+1, red/10, green/10, blue/10);
     showStrip();
     delay(SpeedDelay);
   }
@@ -371,7 +371,7 @@ void RunningLights(byte red, byte green, byte blue, int WaveDelay) {
 
 void colorWipe(byte red, byte green, byte blue, int SpeedDelay) {
   for(uint16_t i=0; i<NUM_LEDS; i++) {
-      setPixel(i, red, green, blue);
+      setPixelR(i, red, green, blue);
       showStrip();
       delay(SpeedDelay);
   }
@@ -384,7 +384,7 @@ void rainbowCycle(int SpeedDelay) {
   for(j=0; j<256*5; j++) { // 5 cycles of all colors on wheel
     for(i=0; i< NUM_LEDS; i++) {
       c=Wheel(((i * 256 / NUM_LEDS) + j) & 255);
-      setPixel(i, *c, *(c+1), *(c+2));
+      setPixelR(i, *c, *(c+1), *(c+2));
     }
     showStrip();
     delay(SpeedDelay);
@@ -418,14 +418,14 @@ void theaterChase(byte red, byte green, byte blue, int SpeedDelay) {
   for (int j=0; j<10; j++) {  //do 10 cycles of chasing
     for (int q=0; q < 3; q++) {
       for (int i=0; i < NUM_LEDS; i=i+3) {
-        setPixel(i+q, red, green, blue);    //turn every third pixel on
+        setPixelR(i+q, red, green, blue);    //turn every third pixel on
       }
       showStrip();
      
       delay(SpeedDelay);
      
       for (int i=0; i < NUM_LEDS; i=i+3) {
-        setPixel(i+q, 0,0,0);        //turn every third pixel off
+        setPixelR(i+q, 0,0,0);        //turn every third pixel off
       }
     }
   }
@@ -524,7 +524,7 @@ void meteorRain(byte red, byte green, byte blue, byte meteorSize, byte meteorTra
     // draw meteor
     for(int j = 0; j < meteorSize; j++) {
       if( ( i-j <NUM_LEDS) && (i-j>=0) ) {
-        setPixel(i-j, red, green, blue);
+        setPixelR(i-j, red, green, blue);
       } 
     }
    
@@ -555,6 +555,7 @@ void fadeToBlack(int ledNo, byte fadeValue) {
  #ifndef ADAFRUIT_NEOPIXEL_H
    // FastLED
    leds[ledNo].fadeToBlackBy( fadeValue );
+   leds[ledNo+NUM_LEDS].fadeToBlackBy( fadeValue );
  #endif  
 }
 
