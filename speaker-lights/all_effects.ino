@@ -38,12 +38,15 @@ void receiveEvent(int count)
   {
     byte cmd = Wire.read();
     byte cancel = Wire.read();
-    int effect = Wire.read();
+    int val = Wire.read();
     switch (cmd)
     {
     case 1: // set effect
-      selectedEffect = effect;
+      selectedEffect = val;
       cancelEffect = cancel;
+      break;
+    case 2: // set rotation
+      reverse_rotation = val;
       break;
     }
   }
