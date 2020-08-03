@@ -135,12 +135,6 @@ void receiveEvent(int count)
   }
 }
 
-void clearSendBuffer()
-{
-  for(byte x=0; x < sizeof(sendBuffer); x++)
-    sendBuffer[x]=0;
-}
-
 void requestEvent()
 {
   Wire.write((const uint8_t*)sendBuffer,sizeof(sendBuffer));
