@@ -5,7 +5,6 @@
 CRGB leds[NUM_LEDS * 2];
 #define PIN 6
 #define PIN_R 7
-#define BUTTON 2 //wird hier nicht gebraucht
 
 #define I2C_MSG_IN_SIZE 4
 #define I2C_MSG_OUT_SIZE 4
@@ -30,7 +29,7 @@ void setup()
 
 void requestEvent()
 {
-  Wire.write((const uint8_t*)sendBuffer,sizeof(sendBuffer));
+  Wire.write((const uint8_t *)sendBuffer, sizeof(sendBuffer));
 }
 
 void receiveEvent(int count)
@@ -42,9 +41,9 @@ void receiveEvent(int count)
     int effect = Wire.read();
     switch (cmd)
     {
-      case 1: // set effect
-        selectedEffect = effect;
-        cancelEffect = cancel;
+    case 1: // set effect
+      selectedEffect = effect;
+      cancelEffect = cancel;
       break;
     }
   }
@@ -52,15 +51,44 @@ void receiveEvent(int count)
   // effects rotating 3/4/9/10/11/12/15
   // effect not working: #14
 
+  int cancelableDelay(int val)
+  {
+    unsigned long now = millis();
+    unsigned long end = now + val;
+    int checkInterval = val > 20 ? 20 : val; // check every 20 ms
+    while (now < end)
+    {
+      now = millis();
+      if (cancelEffect)
+      {
+        return 1;
+      }
+      delay(end - now > checkInterval ? checkInterval : end - now);
+    }
+    return 0; // not canceled
+  }
+// use to have cancelable effects
+#define effectDelay( a ) { int _cancel = cancelableDelay( a ); if(_cancel) return; }
+// else simple delay
+#define effectDelay( a ) delay( a )
+
   void loop()
   {
-    /* auto loop disabled
+    /* UNCOMMENT to ENABLE auto loop (without i2c control)
+    
     selectedEffect++; // increase effect to the next one
 
     if (selectedEffect > 15)
     {
       selectedEffect = 0;
-    } */
+    } 
+    
+    */
+
+    if( cancelEffect ) {    // fade to black if effect was cancel by command
+      cancelEffect = 0;
+      FadeToBlack(64, 6, 50);
+    }
 
     switch (selectedEffect)
     {
@@ -189,12 +217,26 @@ void receiveEvent(int count)
       meteorRain(0x00, 0xff, 0x00, 10, 64, true, 30);
       break;
     }
+    case 16:
+    {
+      FadeToBlack(64, 6, 150);
+      break;
+    }
     }
   }
 
   // *************************
   // ** LEDEffect Functions **
   // *************************
+
+  void FadeToBlack(int fadeValue, int iterations, int SpeedDelay)
+  {
+    for (int i = 0; i < interations; i++)
+    {
+      fadeAllToBlack(fadeValue);
+      effectDelay(SpeedDelay);
+    }
+  }
 
   void RGBLoop()
   {
@@ -219,7 +261,7 @@ void receiveEvent(int count)
           break;
         }
         showStrip();
-        delay(1);
+        effectDelay(1);
       }
       // Fade OUT
       for (int k = 255; k >= 0; k--)
@@ -240,7 +282,7 @@ void receiveEvent(int count)
           break;
         }
         showStrip();
-        delay(1);
+        effectDelay(1);
       }
     }
   }
@@ -274,13 +316,13 @@ void receiveEvent(int count)
     {
       setAll(red, green, blue);
       showStrip();
-      delay(FlashDelay);
+      effectDelay(FlashDelay);
       setAll(0, 0, 0);
       showStrip();
-      delay(FlashDelay);
+      effectDelay(FlashDelay);
     }
 
-    delay(EndPause);
+    effectDelay(EndPause);
   }
 
   void NewKITT(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay)
@@ -317,9 +359,9 @@ void receiveEvent(int count)
       setPixelR(NUM_LEDS - i - EyeSize - 1, red / 10, green / 10, blue / 10);
 
       showStrip();
-      delay(SpeedDelay);
+      effectDelay(SpeedDelay);
     }
-    delay(ReturnDelay);
+    effectDelay(ReturnDelay);
   }
 
   // used by NewKITT
@@ -344,9 +386,9 @@ void receiveEvent(int count)
       setPixelR(NUM_LEDS - i - EyeSize - 1, red / 10, green / 10, blue / 10);
 
       showStrip();
-      delay(SpeedDelay);
+      effectDelay(SpeedDelay);
     }
-    delay(ReturnDelay);
+    effectDelay(ReturnDelay);
   }
 
   // used by NewKITT
@@ -362,9 +404,9 @@ void receiveEvent(int count)
       }
       setPixelR(i + EyeSize + 1, red / 10, green / 10, blue / 10);
       showStrip();
-      delay(SpeedDelay);
+      effectDelay(SpeedDelay);
     }
-    delay(ReturnDelay);
+    effectDelay(ReturnDelay);
   }
 
   // used by NewKITT
@@ -380,9 +422,9 @@ void receiveEvent(int count)
       }
       setPixelR(i + EyeSize + 1, red / 10, green / 10, blue / 10);
       showStrip();
-      delay(SpeedDelay);
+      effectDelay(SpeedDelay);
     }
-    delay(ReturnDelay);
+    effectDelay(ReturnDelay);
   }
 
   void Twinkle(byte red, byte green, byte blue, int Count, int SpeedDelay, boolean OnlyOne)
@@ -393,14 +435,14 @@ void receiveEvent(int count)
     {
       setPixel(random(NUM_LEDS), red, green, blue);
       showStrip();
-      delay(SpeedDelay);
+      effectDelay(SpeedDelay);
       if (OnlyOne)
       {
         setAll(0, 0, 0);
       }
     }
 
-    delay(SpeedDelay);
+    effectDelay(SpeedDelay);
   }
 
   void TwinkleRandom(int Count, int SpeedDelay, boolean OnlyOne)
@@ -411,14 +453,14 @@ void receiveEvent(int count)
     {
       setPixel(random(NUM_LEDS), random(0, 255), random(0, 255), random(0, 255));
       showStrip();
-      delay(SpeedDelay);
+      effectDelay(SpeedDelay);
       if (OnlyOne)
       {
         setAll(0, 0, 0);
       }
     }
 
-    delay(SpeedDelay);
+    effectDelay(SpeedDelay);
   }
 
   void Sparkle(byte red, byte green, byte blue, int SpeedDelay)
@@ -426,7 +468,7 @@ void receiveEvent(int count)
     int Pixel = random(NUM_LEDS);
     setPixel(Pixel, red, green, blue);
     showStrip();
-    delay(SpeedDelay);
+    effectDelay(SpeedDelay);
     setPixel(Pixel, 0, 0, 0);
   }
 
@@ -437,10 +479,10 @@ void receiveEvent(int count)
     int Pixel = random(NUM_LEDS);
     setPixel(Pixel, 0xff, 0xff, 0xff);
     showStrip();
-    delay(SparkleDelay);
+    effectDelay(SparkleDelay);
     setPixel(Pixel, red, green, blue);
     showStrip();
-    delay(SpeedDelay);
+    effectDelay(SpeedDelay);
   }
 
   void RunningLights(byte red, byte green, byte blue, int WaveDelay)
@@ -462,7 +504,7 @@ void receiveEvent(int count)
       }
 
       showStrip();
-      delay(WaveDelay);
+      effectDelay(WaveDelay);
     }
   }
 
@@ -472,7 +514,7 @@ void receiveEvent(int count)
     {
       setPixelR(i, red, green, blue);
       showStrip();
-      delay(SpeedDelay);
+      effectDelay(SpeedDelay);
     }
   }
 
@@ -489,7 +531,7 @@ void receiveEvent(int count)
         setPixelR(i, *c, *(c + 1), *(c + 2));
       }
       showStrip();
-      delay(SpeedDelay);
+      effectDelay(SpeedDelay);
     }
   }
 
@@ -534,7 +576,7 @@ void receiveEvent(int count)
         }
         showStrip();
 
-        delay(SpeedDelay);
+        effectDelay(SpeedDelay);
 
         for (int i = 0; i < NUM_LEDS; i = i + 3)
         {
@@ -559,7 +601,7 @@ void receiveEvent(int count)
         }
         showStrip();
 
-        delay(SpeedDelay);
+        effectDelay(SpeedDelay);
 
         for (int i = 0; i < NUM_LEDS; i = i + 3)
         {
@@ -612,7 +654,7 @@ void receiveEvent(int count)
       }
 
       showStrip();
-      delay(SpeedDelay);
+      effectDelay(SpeedDelay);
     }
   }
 
@@ -666,7 +708,7 @@ void receiveEvent(int count)
       }
 
       showStrip();
-      delay(SpeedDelay);
+      effectDelay(SpeedDelay);
     }
   }
 
@@ -697,13 +739,13 @@ void receiveEvent(int count)
 #endif
   }
 
-  void fadeAllToBlack( byte fadeValue) {
-    for( int i = 0; i < NUM_LEDS; i++) {
-      fadeToBlack(i,fadeValue)
+  void fadeAllToBlack(byte fadeValue)
+  {
+    for (int i = 0; i < NUM_LEDS; i++)
+    {
+      fadeToBlack(i, fadeValue)
     }
   }
-
-
 
   // ***************************************
   // ** FastLed/NeoPixel Common Functions **
