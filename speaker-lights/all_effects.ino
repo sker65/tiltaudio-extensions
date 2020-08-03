@@ -7,6 +7,8 @@ CRGB leds[NUM_LEDS*2];
 #define BUTTON 2 //wird hier nicht gebraucht
 byte selectedEffect=-1; // start with "-1" since the "loop" will right away increase it by 1
 
+int reverse_rotation = 1; // if not equal to zero rotation on second ring will be reversed
+
 void setup()
 {
    FastLED.addLeds<WS2811, PIN, GRB>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
@@ -604,9 +606,15 @@ void setPixelR(int Pixel, byte red, byte green, byte blue) {
    leds[Pixel].r = red;
    leds[Pixel].g = green;
    leds[Pixel].b = blue;
-   leds[e-pixel].r = red;
-   leds[e-pixel].g = green;
-   leds[e-pixel].b = blue;
+   if( reverse_rotation ) {
+    leds[e-pixel].r = red;
+    leds[e-pixel].g = green;
+    leds[e-pixel].b = blue;
+   } else {
+    leds[Pixel+NUM_LEDS].r = red;
+    leds[Pixel+NUM_LEDS].g = green;
+    leds[Pixel+NUM_LEDS].b = blue;
+   }
  #endif
 }
 
