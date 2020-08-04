@@ -80,7 +80,7 @@ int cancelableDelay(int val)
       return;                         \
   }
 // else simple delay
-#define effectDelay(a) delay(a)
+// #define effectDelay(a) delay(a)
 
 void loop()
 {
