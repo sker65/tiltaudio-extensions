@@ -2,7 +2,7 @@
 -- controls wheter or not the second ring does effects rotation reverse
 -- --------------
 function setReverseRotation(rotation) {
-  sendI2CW(0x60,1,rotation)
+  sendI2CW(0x60,2,rotation)
 }
 
 -- --------------
@@ -12,5 +12,9 @@ function setReverseRotation(rotation) {
 function setEffect(effectNumber, cancel) {
   cancel = cancel or 1  -- cancel is default
   sendI2CW(0x60,1,cancel,effectNumber)
+}
+
+function playCallout(callout) {
+  sendI2CW(0x60,3,0,callout)
 }
 

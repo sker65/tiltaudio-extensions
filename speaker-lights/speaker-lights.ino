@@ -15,6 +15,7 @@ volatile uint8_t sendBuffer[I2C_MSG_OUT_SIZE];
 
 int selectedEffect = -1; // start with "-1" since the "loop" will right away increase it by 1
 int cancelEffect = 0;
+int calloutToPlay = 0;
 
 int reverse_rotation = 1; // if not equal to zero rotation on second ring will be reversed
 
@@ -48,6 +49,10 @@ void receiveEvent(int count)
       break;
     case 2: // set rotation
       reverse_rotation = val;
+      break;
+    case 3: // play callout
+      cancelEffect = 1;
+      calloutToPlay = val;
       break;
     }
   }
@@ -98,141 +103,154 @@ void loop()
   if (cancelEffect)
   { // fade to black if effect was cancel by command
     cancelEffect = 0;
-    FadeToBlack(64, 6, 50);
+    FadeToBlack(64, 6, calloutToPlay ? 1 : 50); // for callout rapidly fade to black
   }
-
-  switch (selectedEffect)
+  if (calloutToPlay)
+  {
+    switch (calloutToPlay)
+    {
+    case 1:
+      playNowISeeYou();
+      break;
+    }
+    calloutToPlay = 0;
+  }
+  else
   {
 
-  case 0:
-  {
-    // RGBLoop - no parameters
-    RGBLoop();
-    break;
-  }
+    switch (selectedEffect)
+    {
 
-  case 1:
-  {
-    // FadeInOut - Color (red, green. blue)
-    FadeInOut(0xff, 0x00, 0x00); // red
-    FadeInOut(0x88, 0x00, 0xff); // vio
-    FadeInOut(0x00, 0x00, 0xff); // blue
-    break;
-  }
+    case 0:
+    {
+      // RGBLoop - no parameters
+      RGBLoop();
+      break;
+    }
 
-  case 2:
-  {
-    // Strobe - Color (red, green, blue), number of flashes, flash speed, end pause
-    Strobe(0xff, 0xff, 0xff, random(5, 20), 50, 500);
-    break;
-  }
+    case 1:
+    {
+      // FadeInOut - Color (red, green. blue)
+      FadeInOut(0xff, 0x00, 0x00); // red
+      FadeInOut(0x88, 0x00, 0xff); // vio
+      FadeInOut(0x00, 0x00, 0xff); // blue
+      break;
+    }
 
-  case 3:
-  {
-    // fast rainbowCycle - speed delay
-    rainbowCycle(1);
-    break;
-  }
+    case 2:
+    {
+      // Strobe - Color (red, green, blue), number of flashes, flash speed, end pause
+      Strobe(0xff, 0xff, 0xff, random(5, 20), 50, 500);
+      break;
+    }
 
-  case 4:
-  {
-    // NewKITT - Color (red, green, blue), eye size, speed delay, end pause
-    NewKITT(0xff, 0x00, 0x00, 8, 10, 20);
-    break;
-  }
+    case 3:
+    {
+      // fast rainbowCycle - speed delay
+      rainbowCycle(1);
+      break;
+    }
 
-  case 5:
-  {
-    // Twinkle - Color (red, green, blue), count, speed delay, only one twinkle (true/false)
-    Twinkle(0x88, 0x00, 0xff, 10, 50, false);
-    break;
-  }
+    case 4:
+    {
+      // NewKITT - Color (red, green, blue), eye size, speed delay, end pause
+      NewKITT(0xff, 0x00, 0x00, 8, 10, 20);
+      break;
+    }
 
-  case 6:
-  {
-    // TwinkleRandom - twinkle count, speed delay, only one (true/false)
-    TwinkleRandom(20, 50, false);
-    break;
-  }
+    case 5:
+    {
+      // Twinkle - Color (red, green, blue), count, speed delay, only one twinkle (true/false)
+      Twinkle(0x88, 0x00, 0xff, 10, 50, false);
+      break;
+    }
 
-  case 7:
-  {
-    // Sparkle - Color (red, green, blue), speed delay
-    Sparkle(0xff, 0xff, 0xff, 50);
-    break;
-  }
+    case 6:
+    {
+      // TwinkleRandom - twinkle count, speed delay, only one (true/false)
+      TwinkleRandom(20, 50, false);
+      break;
+    }
 
-  case 8:
-  {
-    // SnowSparkle - Color (red, green, blue), sparkle delay, speed delay
-    SnowSparkle(0x10, 0x10, 0x10, 20, random(100, 200));
-    break;
-  }
+    case 7:
+    {
+      // Sparkle - Color (red, green, blue), speed delay
+      Sparkle(0xff, 0xff, 0xff, 50);
+      break;
+    }
 
-  case 9:
-  {
-    // Running Lights - Color (red, green, blue), wave dealy
-    RunningLights(0xff, 0x00, 0x00, 30); // red
-    RunningLights(0x00, 0xff, 0x00, 30); // green
-    RunningLights(0x00, 0x00, 0xff, 30); // blue
-    break;
-  }
+    case 8:
+    {
+      // SnowSparkle - Color (red, green, blue), sparkle delay, speed delay
+      SnowSparkle(0x10, 0x10, 0x10, 20, random(100, 200));
+      break;
+    }
 
-  case 10:
-  {
-    // colorWipe - Color (red, green, blue), speed delay
-    colorWipe(0x00, 0xff, 0x00, 20);
-    colorWipe(0xff, 0x00, 0x00, 20);
-    colorWipe(0x00, 0x00, 0xff, 20);
-    //second round:
-    colorWipe(0x00, 0xff, 0x00, 20);
-    colorWipe(0xff, 0x00, 0x00, 20);
-    colorWipe(0x00, 0x00, 0xff, 20);
-    break;
-  }
+    case 9:
+    {
+      // Running Lights - Color (red, green, blue), wave dealy
+      RunningLights(0xff, 0x00, 0x00, 30); // red
+      RunningLights(0x00, 0xff, 0x00, 30); // green
+      RunningLights(0x00, 0x00, 0xff, 30); // blue
+      break;
+    }
 
-  case 11:
-  {
-    // rainbowCycle - speed delay
-    rainbowCycle(5);
-    break;
-  }
+    case 10:
+    {
+      // colorWipe - Color (red, green, blue), speed delay
+      colorWipe(0x00, 0xff, 0x00, 20);
+      colorWipe(0xff, 0x00, 0x00, 20);
+      colorWipe(0x00, 0x00, 0xff, 20);
+      //second round:
+      colorWipe(0x00, 0xff, 0x00, 20);
+      colorWipe(0xff, 0x00, 0x00, 20);
+      colorWipe(0x00, 0x00, 0xff, 20);
+      break;
+    }
 
-  case 12:
-  {
-    // theatherChase - Color (red, green, blue), speed delay
-    theaterChase(0x88, 0, 0xff, 50);
-    break;
-  }
+    case 11:
+    {
+      // rainbowCycle - speed delay
+      rainbowCycle(5);
+      break;
+    }
 
-  case 13:
-  {
-    // theaterChaseRainbow - Speed delay
-    theaterChaseRainbow(20);
-    break;
-  }
+    case 12:
+    {
+      // theatherChase - Color (red, green, blue), speed delay
+      theaterChase(0x88, 0, 0xff, 50);
+      break;
+    }
 
-  case 14:
-  {
-    // Fire - Cooling rate, Sparking rate, speed delay
-    Fire(55, 120, 150, 30);
-    break;
-  }
+    case 13:
+    {
+      // theaterChaseRainbow - Speed delay
+      theaterChaseRainbow(20);
+      break;
+    }
 
-  case 15:
-  {
-    // meteorRain - Color (red, green, blue), meteor size, trail decay, random trail decay (true/false), speed delay
-    meteorRain(0xff, 0xff, 0xff, 10, 64, true, 20);
-    meteorRain(0xff, 0xff, 0xff, 10, 64, true, 20);
-    meteorRain(0x00, 0xff, 0x00, 10, 64, true, 30);
-    meteorRain(0x00, 0xff, 0x00, 10, 64, true, 30);
-    break;
-  }
-  case 16:
-  {
-    FadeToBlack(64, 6, 150);
-    break;
-  }
+    case 14:
+    {
+      // Fire - Cooling rate, Sparking rate, speed delay
+      Fire(55, 120, 150, 30);
+      break;
+    }
+
+    case 15:
+    {
+      // meteorRain - Color (red, green, blue), meteor size, trail decay, random trail decay (true/false), speed delay
+      meteorRain(0xff, 0xff, 0xff, 10, 64, true, 20);
+      meteorRain(0xff, 0xff, 0xff, 10, 64, true, 20);
+      meteorRain(0x00, 0xff, 0x00, 10, 64, true, 30);
+      meteorRain(0x00, 0xff, 0x00, 10, 64, true, 30);
+      break;
+    }
+    case 16:
+    {
+      FadeToBlack(64, 6, 150);
+      break;
+    }
+    }
   }
 }
 
@@ -833,117 +851,119 @@ void setAll(byte red, byte green, byte blue)
 #define NOW_I_SEE_YOU_SAMPLES 107
 // volume sample from callout "Now I see you" sample frequecy 21ms
 byte nowISeeYou[NOW_I_SEE_YOU_SAMPLES] = {
-  230,
-  120,
-  130,
-  120,
-  110,
-  110,
-  20,
-  110,
-  40,
-  40,
-  140,
-  0,
-  40,
-  80,
-  30,
-  110,
-  100,
-  50,
-  20,
-  40,
-  60,
-  70,
-  60,
-  70,
-  50,
-  60,
-  40,
-  130,
-  50,
-  60,
-  120,
-  30,
-  60,
-  20,
-  50,
-  80,
-  50,
-  80,
-  90,
-  100,
-  70,
-  20,
-  90,
-  50,
-  80,
-  100,
-  150,
-  20,
-  60,
-  140,
-  30,
-  70,
-  150,
-  60,
-  30,
-  20,
-  50,
-  255,
-  120,
-  60,
-  120,
-  70,
-  180,
-  140,
-  50,
-  30,
-  50,
-  150,
-  110,
-  110,
-  70,
-  255,
-  255,
-  60,
-  150,
-  120,
-  70,
-  140,
-  20,
-  70,
-  30,
-  50,
-  110,
-  90,
-  160,
-  120,
-  200,
-  160,
-  90,
-  140,
-  255,
-  90,
-  140,
-  70,
-  120,
-  40,
-  50,
-  100,
-  130,
-  90,
-  200,
-  60,
-  100,
-  110,
-  50,
-  210,
-  140,
+    230,
+    120,
+    130,
+    120,
+    110,
+    110,
+    20,
+    110,
+    40,
+    40,
+    140,
+    0,
+    40,
+    80,
+    30,
+    110,
+    100,
+    50,
+    20,
+    40,
+    60,
+    70,
+    60,
+    70,
+    50,
+    60,
+    40,
+    130,
+    50,
+    60,
+    120,
+    30,
+    60,
+    20,
+    50,
+    80,
+    50,
+    80,
+    90,
+    100,
+    70,
+    20,
+    90,
+    50,
+    80,
+    100,
+    150,
+    20,
+    60,
+    140,
+    30,
+    70,
+    150,
+    60,
+    30,
+    20,
+    50,
+    255,
+    120,
+    60,
+    120,
+    70,
+    180,
+    140,
+    50,
+    30,
+    50,
+    150,
+    110,
+    110,
+    70,
+    255,
+    255,
+    60,
+    150,
+    120,
+    70,
+    140,
+    20,
+    70,
+    30,
+    50,
+    110,
+    90,
+    160,
+    120,
+    200,
+    160,
+    90,
+    140,
+    255,
+    90,
+    140,
+    70,
+    120,
+    40,
+    50,
+    100,
+    130,
+    90,
+    200,
+    60,
+    100,
+    110,
+    50,
+    210,
+    140,
 };
 
-void playNowISeeYou() {
-  for(int i = 0; i < NOW_I_SEE_YOU_SAMPLES; i++) {
+void playNowISeeYou()
+{
+  for (int i = 0; i < NOW_I_SEE_YOU_SAMPLES; i++)
+  {
     setAll(nowISeeYou[i], nowISeeYou[i], nowISeeYou[i]);
     effectDelay(21);
   }
