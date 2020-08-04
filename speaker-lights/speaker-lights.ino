@@ -754,7 +754,7 @@ void fadeAllToBlack(byte fadeValue)
 {
   for (int i = 0; i < NUM_LEDS; i++)
   {
-    fadeToBlack(i, fadeValue)
+    fadeToBlack(i, fadeValue);
   }
 }
 
@@ -807,9 +807,9 @@ void setPixelR(int Pixel, byte red, byte green, byte blue)
   leds[Pixel].b = blue;
   if (reverse_rotation)
   {
-    leds[e - pixel].r = red;
-    leds[e - pixel].g = green;
-    leds[e - pixel].b = blue;
+    leds[e - Pixel].r = red;
+    leds[e - Pixel].g = green;
+    leds[e - Pixel].b = blue;
   }
   else
   {
