@@ -1,6 +1,7 @@
 #include "FastLED.h"
 #include <Wire.h>
 
+// define LEDS per ring
 #define NUM_LEDS 60
 CRGB leds[NUM_LEDS * 2];
 #define PIN 6
@@ -241,7 +242,7 @@ void loop()
 
 void FadeToBlack(int fadeValue, int iterations, int SpeedDelay)
 {
-  for (int i = 0; i < interations; i++)
+  for (int i = 0; i < iterations; i++)
   {
     fadeAllToBlack(fadeValue);
     effectDelay(SpeedDelay);
