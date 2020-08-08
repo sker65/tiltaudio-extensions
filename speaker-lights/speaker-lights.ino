@@ -4,12 +4,18 @@
 // define LEDS per ring
 #define NUM_LEDS 60
 CRGB leds[NUM_LEDS * 2];
+
+// if defined both rings are controlled with one wire, if not each ring has its own
+#define ONE_WIRE
 #define PIN 6
-#define PIN_R 7
+// only needed for two wires
+// #define PIN_R 7
 
 #define I2C_MSG_IN_SIZE 4
 #define I2C_MSG_OUT_SIZE 4
 #define I2C_ADDRESS 0x60
+
+#define LED_PIN 13
 
 volatile uint8_t sendBuffer[I2C_MSG_OUT_SIZE];
 
@@ -25,8 +31,15 @@ void setup()
   Wire.onReceive(receiveEvent);
   Wire.onRequest(requestEvent);
 
+#ifdef ONE_WIRE
+  FastLED.addLeds<WS2811, PIN, GRB>(leds, NUM_LEDS*2).setCorrection(TypicalLEDStrip);
+#else
   FastLED.addLeds<WS2811, PIN, GRB>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
   FastLED.addLeds<WS2811, PIN_R, GRB>(leds, NUM_LEDS, NUM_LEDS).setCorrection(TypicalLEDStrip); //Reverse direction
+#endif
+  // use internal led as optical feedback when i2c command incoming
+  // or effects running
+  pinMode(LED_PIN, OUTPUT);
 }
 
 void requestEvent()
@@ -58,6 +71,20 @@ void receiveEvent(int count)
   }
 }
 
+void handleLed(unsigned long now) {
+  static int state = 0;
+  static unsigned long lastSwitch = 0;
+  if( lastSwitch + 200 < now ) {
+    lastSwitch = now;
+    state = !state;
+    digitalWrite(LED_PIN, state ? LOW : HIGH );
+  }
+}
+
+void loopCallback(unsigned long now) {
+  handleLed(now);
+}
+
 // effects rotating 3/4/9/10/11/12/15
 // effect not working: #14
 
@@ -69,6 +96,7 @@ int cancelableDelay(int val)
   while (now < end)
   {
     now = millis();
+    loopCallback(now);
     if (cancelEffect)
     {
       return 1;
@@ -89,7 +117,7 @@ int cancelableDelay(int val)
 
 void loop()
 {
-  /* UNCOMMENT to ENABLE auto loop (without i2c control)
+  /* UNCOMMENT to ENABLE auto loop (without i2c control)*/
     
     selectedEffect++; // increase effect to the next one
 
@@ -98,7 +126,7 @@ void loop()
       selectedEffect = 0;
     } 
     
-    */
+    
 
   if (cancelEffect)
   { // fade to black if effect was cancel by command
