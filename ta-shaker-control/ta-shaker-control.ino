@@ -32,6 +32,50 @@ void setSpeed( int speed ) {
   on();
 }
 
+#define END 0x00
+#define ON 0x01
+#define OFF 0x02
+#define RAMP 0x03
+
+int sequences[] = { ON, 5, 500, OFF, 0, 500, ON, 5, 500, END };
+int* seqPtr = NULL;
+
+unsigned long nextAction = 0; // timer marker for next action
+float rampInc;                // speed incs for ramps in steps
+int rampNo = 0;               // counts number of step in ramp phase
+
+void loop() {
+  unsigned long now = millis();
+  if( now > nextAction ) {
+
+    // ramp active
+    if( rampNo > 0 ) {
+      nextAction = now + 50;
+      setSpeed( currentSpeed + rampInc );
+      rampNo--;
+    } else {
+      // read next command from sequence
+      int cmd = *seqPtr++;
+      if( cmd == END ) {
+        seqPtr = NULL; // end of sequence
+        nextAction = 0;
+      } else {
+        int val = *seqPtr++;
+        int delay = *seqPtr++;
+        nextAction = now + delay;
+        switch(cmd) {
+          case ON:  setSpeed(val); break;
+          case OFF: off(); break;
+          case RAMP:
+            rampNo = delay / 50; // inc every 50ms
+            nextAction = now + 50;
+            rampInc = (val - currentSpeed) / (float) rampNo; 
+        }
+      }
+    }
+  }
+}
+
 void receiveEvent(int count)
 {
   if (count == I2C_MSG_IN_SIZE)
