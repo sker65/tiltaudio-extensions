@@ -36,9 +36,12 @@ void setSpeed( int speed ) {
 #define ON 0x01
 #define OFF 0x02
 #define RAMP 0x03
+#define SETSPEED 0x04
+#define PLAYSEQ 0x05
 
 int sequences[] = { ON, 5, 500, OFF, 0, 500, ON, 5, 500, END };
-int* seqPtr = NULL;
+int seqIdx = -1;
+int sizeOfSequences = 10;     // length of sequences array
 
 unsigned long nextAction = 0; // timer marker for next action
 float rampInc;                // speed incs for ramps in steps
@@ -55,13 +58,13 @@ void loop() {
       rampNo--;
     } else {
       // read next command from sequence
-      int cmd = *seqPtr++;
+      int cmd = sequences[seqIdx++];
       if( cmd == END ) {
-        seqPtr = NULL; // end of sequence
+        seqIdx = -1; // end of sequence
         nextAction = 0;
       } else {
-        int val = *seqPtr++;
-        int delay = *seqPtr++;
+        int val = sequences[seqIdx++];
+        int delay = sequences[seqIdx++];
         nextAction = now + delay;
         switch(cmd) {
           case ON:  setSpeed(val); break;
@@ -76,6 +79,13 @@ void loop() {
   }
 }
 
+void playSequence( int startIndex ) {
+  if( startIndex >= 0 && startIndex < sizeOfSequences ) {
+    seqIdx = startIndex;
+    nextAction = millis();
+  }
+}
+
 void receiveEvent(int count)
 {
   if (count == I2C_MSG_IN_SIZE)
@@ -83,14 +93,17 @@ void receiveEvent(int count)
     byte cmd = Wire.read();
     byte value = Wire.read();
     switch( cmd ) {
-      case 0x01:
+      case ON:
+        on();
+        break;
+      case OFF:
         off();
         break;
-      case 0x02:
-        off();
-        break;
-      case 0x03:
+      case SETSPEED:
         setSpeed(value);
+        break;
+      case PLAYSEQ:
+        playSequence(value);
         break;
       default:
         // unknown command
