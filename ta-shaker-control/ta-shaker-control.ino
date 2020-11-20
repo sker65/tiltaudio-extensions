@@ -18,10 +18,13 @@ void setup() {
   // init PWN output
   pinMode(PWM_PIN, OUTPUT);
   pinMode(LED,OUTPUT);
+  // let led blink 10 times at startup
   ledBlinks = 10;
+  // shaker speed 0
   analogWrite(PWM_PIN,0); 
 }
 
+// remember and limit speed
 int currentSpeed = 0;
 int maxSpeed = 255;
 
@@ -40,6 +43,7 @@ void setSpeed( int speed ) {
   on();
 }
 
+// command bytes
 #define END 0x00
 #define ON 0x01
 #define OFF 0x02
@@ -47,15 +51,18 @@ void setSpeed( int speed ) {
 #define SETSPEED 0x04
 #define PLAYSEQ 0x05
 
-volatile uint8_t sendBuffer[I2C_MSG_OUT_SIZE];
-
+// array that stores all sequences that can be triggered, must end with END command
+// each sequence step consists of CMD, val & and delay in milliseconds, e.g. RAMP, 90, 1000 means
+// RAMP up / down current speed to 90 in 1 second.
 int sequences[] = { 
   RAMP, 90, 5000, RAMP, 00, 5000, RAMP, 160, 5000, RAMP, 00, 5000, OFF, 0, 100, END, 
   // 16
   ON, 25, 1000, OFF, 0, 1000, ON, 25, 1500, OFF, 0, 1000, END,
 };
+
 int seqIdx = -1;
-int sizeOfSequences = 20;     // length of sequences array
+int startIndex[] = { 0, 16 }; // start index for each sequence
+#define MAX_SEQUENCES 2
 
 unsigned long nextAction = 0; // timer marker for next action
 int rampInc;                  // speed incs for ramps in steps
@@ -107,9 +114,9 @@ void loop() {
   }
 }
 
-void playSequence( int startIndex ) {
-  if( startIndex >= 0 && startIndex < sizeOfSequences ) {
-    seqIdx = startIndex;
+void playSequence( int seq ) {
+  if( seq >= 0 && seq < MAX_SEQUENCES ) {
+    seqIdx = startIndex[seq];
     nextAction = millis();
   }
 }
@@ -119,8 +126,7 @@ void receiveEvent(int count) {
   {
     byte cmd = Wire.read();
     byte value = Wire.read();
-//    Wire.read();
-//    Wire.read();
+    // blink to ack the received cmd
     ledBlinks = cmd;
     switch( cmd ) {
       case ON:
