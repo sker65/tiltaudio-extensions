@@ -19,6 +19,8 @@ Servo servo1;  // create servo object to control a servo
 #define MAX_SERVOS 1
 Servo* servos[MAX_SERVOS];
 
+#define SERVO_SET 1
+
 void setup() {
   // init i2c bus
   Wire.begin(I2C_ADDRESS);
