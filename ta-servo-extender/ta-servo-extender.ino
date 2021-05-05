@@ -14,6 +14,8 @@
 #define I2C_MSG_OUT_SIZE   4
 #define I2C_ADDRESS 0x5F
 
+volatile uint8_t sendBuffer[I2C_MSG_OUT_SIZE];
+
 Servo servo1;  // create servo object to control a servo
 
 #define MAX_SERVOS 1
@@ -45,13 +47,13 @@ void receiveEvent(int count)
   if (count == I2C_MSG_IN_SIZE)
   {
     byte cmd = Wire.read();  
-    byte servo = Wire.read();
+    byte servoNumber = Wire.read();
     int value = Wire.read();
     if( servoNumber >= 0 && servoNumber < MAX_SERVOS ) {
       switch (cmd)
       {
       case SERVO_SET:
-        servos[servo]->write(rangeLimit(value,0,180));
+        servos[servoNumber]->write(rangeLimit(value,0,180));
         break;
       
       default:
