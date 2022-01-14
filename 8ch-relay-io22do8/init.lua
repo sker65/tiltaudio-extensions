@@ -13,9 +13,15 @@ function setRelay(relayNo, val)
   sendI2CW(0x5E,1,relayNo,val)
 end
 
-function setDigit(digit, val)
-  sendI2CW(0x5E,2,digit,val)
+-- --------------
+-- controls the 7 digit display
+-- --------------
+function setNumber(num, val)
+  sendI2CW(0x5E,2,num,val)
 end
 
+function setDigitOnOff(num, val)
+  sendI2CW(0x5E,3,num,val)
+end
 
 

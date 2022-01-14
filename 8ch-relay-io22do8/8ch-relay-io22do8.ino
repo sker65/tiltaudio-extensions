@@ -86,11 +86,13 @@ protected:
 	uint8_t relay_port;          // we need to keep track of the 8 relays in this variable
 	uint8_t com_num;             // Digital Tube Common - actual digit to be shown
 	uint32_t previousMillis = 0; // time keeping for periodic calls
+	bool TUBE_ON[4] = { 1, 1, 1, 1 };
 
 	// low level HW access to shift registers
 	// including mapping of pins
 	void update() {
 		static const uint8_t TUBE_NUM[4] = { 0xfe, 0xfd, 0xfb, 0xf7 }; // Tuble bit number - the mapping to commons
+		// set to FF to switch digit off
 		// currently only the first 10 characters (=numbers) are used, but I keep the definitions
 		//        NO.:0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22 23 24 25 26 27 28*/
 		// Character :0,1,2,3,4,5,6,7,8,9,A, b, C, c, d, E, F, H, h, L, n, N, o, P, r, t, U, -,  ,*/
@@ -104,17 +106,17 @@ protected:
 		if( com_num < 3 )
 			com_num++;
 		else
-			com_num = 0;                             // next digit
-		uint8_t dat = dat_buf[com_num];            // Data to be displayed
-		tube_dat = TUBE_SEG[dat];                  // Common Cathode Digital Tube, bit negated - sum of all segments
-		bit_num = ~TUBE_NUM[com_num];              // digital tube common gemappt auf tuble bit number
-		display_l = ( ( tube_dat & 0x10 ) >> 3 );  // Q4   <-D1 -3    SEG_E
-		display_l |= ( ( bit_num & 0x01 ) << 2 );  // DIGI0<-D2 +2
-		display_l |= ( ( tube_dat & 0x08 ) >> 0 ); // Q3   <-D3 0     SEG_D
-		display_l |= ( ( tube_dat & 0x01 ) << 4 ); // Q0   <-D4 -4    SEG_A
-		display_l |= ( ( tube_dat & 0x80 ) >> 2 ); // Q7   <-D5 -2    SEG_DP - Colon - only on digit 1 ?
-		display_l |= ( ( tube_dat & 0x20 ) << 1 ); // Q5   <-D6 1     SEG_F
-		display_l |= ( ( tube_dat & 0x04 ) << 5 ); // Q2   <-D7 5     SEG_C
+			com_num = 0;                  // next digit
+		uint8_t dat = dat_buf[com_num]; // Data to be displayed
+		tube_dat = TUBE_SEG[dat];       // Common Cathode Digital Tube, bit negated - sum of all segments
+		bit_num = TUBE_ON[com_num] ? ~TUBE_NUM[com_num] : 0; // digital tube common gemappt auf tuble bit number
+		display_l = ( ( tube_dat & 0x10 ) >> 3 );            // Q4   <-D1 -3    SEG_E
+		display_l |= ( ( bit_num & 0x01 ) << 2 );            // DIGI0<-D2 +2
+		display_l |= ( ( tube_dat & 0x08 ) >> 0 );           // Q3   <-D3 0     SEG_D
+		display_l |= ( ( tube_dat & 0x01 ) << 4 );           // Q0   <-D4 -4    SEG_A
+		display_l |= ( ( tube_dat & 0x80 ) >> 2 );           // Q7   <-D5 -2    SEG_DP - Colon - only on digit 1 ?
+		display_l |= ( ( tube_dat & 0x20 ) << 1 );           // Q5   <-D6 1     SEG_F
+		display_l |= ( ( tube_dat & 0x04 ) << 5 );           // Q2   <-D7 5     SEG_C
 		// output U3-D0 is not connected,
 		// on the schematic the outputs of the shiftregisters are internally marked with Q, here we use U3-D to refeer to
 		// the latched output)
@@ -152,6 +154,11 @@ public:
 		pinMode( OE_595, OUTPUT );
 	}
 
+	void digitOnOff( int digit, bool onOff ) {
+		if( digit >= 0 && digit <= 3 )
+			TUBE_ON[digit] = onOff;
+	}
+
 	// fills the internal buffer for the digital outputs (relays)
 	void pinWrite( uint8_t pin, uint8_t mode ) {
 		// pin am ersten shiftregister ein oder ausschalten
@@ -178,7 +185,7 @@ public:
 	// it will refresh the multiplex display
 	void tick() {
 		uint32_t currentMillis = millis();
-		if( currentMillis - previousMillis > 1 ) // each two milliseconds gives a stable display on pro Mini 8MHz
+		if( currentMillis - previousMillis > 3 ) // each 2 / 4 milliseconds gives a stable display on pro Mini 8MHz
 		{
 			update();
 			previousMillis = currentMillis;
@@ -204,33 +211,60 @@ void setup() {
 	board.begin(); // prepare the board hardware
 }
 
-byte optoIn = 0;
-byte keyIn = 0;
-#define bitset( byte, nbit ) ( ( byte ) |= ( 1 << ( nbit ) ) )
-#define bitclear( byte, nbit ) ( ( byte ) &= ~( 1 << ( nbit ) ) )
+uint8_t optoIn = 0;
+uint8_t keyIn = 0;
 
 void readInput() {
 	for( size_t i = 0; i < noOfOptoIn; i++ ) {
 		if( digitalRead( optoInPin[i] ) == LOW )
-			bitset( optoIn, i );
+			bitSet( optoIn, i );
 		else
-			bitclear( optoIn, i );
+			bitClear( optoIn, i );
 	}
 	for( size_t i = 0; i < noOfKeyIn; i++ ) {
 		if( digitalRead( keyInPin[i] ) == LOW )
-			bitset( keyIn, i );
+			bitSet( keyIn, i );
 		else
-			bitclear( keyIn, i );
+			bitClear( keyIn, i );
 	}
 }
 
+uint32_t nextTick = 0;
+int n = 0;
+uint32_t relay = 0;
+uint32_t digit = 0;
+
 void loop() {
 	readInput();  // handle input pins
-	board.tick(); // timekeeping for display/
+	board.tick(); // timekeeping for display
+	uint32_t now = millis();
+	// only testing
+	if( now > nextTick ) {
+		nextTick = now + 500;
+		// increment number
+		// board.setNumber( n++ );
+		// cycle relays
+		//		board.pinWrite( relay, LOW );
+		relay++;
+		if( relay == 8 )
+			relay = 0;
+		//		board.pinWrite( relay, HIGH );
+		// cycle digits
+		//		board.digitOnOff( digit, false );
+		if( digit++ == 4 )
+			digit = 0;
+		//		board.digitOnOff( digit, true );
+
+		// set relays according keys
+		// for( size_t i = 0; i < noOfKeyIn; i++ ) {
+		//	board.pinWrite( i, bitRead( keyIn, i ) != 0 );
+		// }
+	}
 }
 
 #define SET_RELAY 1
-#define SET_DIGIT 2
+#define SET_NUMBER 2
+#define SET_DIGIT 3
 
 byte digits[4] = { 0 };
 
@@ -245,10 +279,13 @@ void receiveEvent( int count ) {
 		case SET_RELAY:
 			board.pinWrite( v1, v2 );
 			break;
-		case SET_DIGIT:
+		case SET_NUMBER:
 			if( v1 >= 0 && v1 <= 3 )
 				digits[v1] = rangeLimit( v2, 0, 9 );
 			board.setNumber( digits[0] * 1000 + digits[1] * 100 + digits[2] * 10 + digits[3] );
+			break;
+		case SET_DIGIT:
+			board.digitOnOff( v1, v2 != 0 );
 			break;
 
 		default:
